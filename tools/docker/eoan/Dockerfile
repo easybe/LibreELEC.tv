@@ -24,6 +24,8 @@ RUN apt-get update && apt-get install -y \
     libjson-perl libxml-parser-perl \
     golang-go \
     git openssh-client \
+    pkg-config libyaml-dev libssl-dev bsdmainutils device-tree-compiler \
+    less tig vim cscope \
     --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 
