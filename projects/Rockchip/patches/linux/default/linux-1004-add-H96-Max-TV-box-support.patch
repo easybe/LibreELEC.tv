@@ -1,0 +1,460 @@
+From 45139ca0de92e9b899d080b2e07c34423de46726 Mon Sep 17 00:00:00 2001
+From: Ezra Buehler <ezra@easyb.ch>
+Date: Sun, 24 Jan 2021 08:56:47 +0000
+Subject: [PATCH] arm64: dts: rockchip: add H96 Max+ TV box support
+
+The device tree is based on DTS files for similar devices supported by
+LibreELEC and the DTB extracted from the H96 Max+ Android 9 image
+(RK3328_DC_H96_Max+_HS2734C_9_20191031.2215.img).
+
+Signed-off-by: Ezra Buehler <ezra@easyb.ch>
+---
+ arch/arm64/boot/dts/rockchip/Makefile         |   1 +
+ arch/arm64/boot/dts/rockchip/rk3328-h96mp.dts | 423 ++++++++++++++++++
+ 2 files changed, 424 insertions(+)
+ create mode 100644 arch/arm64/boot/dts/rockchip/rk3328-h96mp.dts
+
+diff --git a/arch/arm64/boot/dts/rockchip/Makefile b/arch/arm64/boot/dts/rockchip/Makefile
+index 1ab55a124a87..2357ebf41376 100644
+--- a/arch/arm64/boot/dts/rockchip/Makefile
++++ b/arch/arm64/boot/dts/rockchip/Makefile
+@@ -9,6 +9,7 @@ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3318-a95x-z2.dtb
+ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3326-odroid-go2.dtb
+ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3328-a1.dtb
+ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3328-evb.dtb
++dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3328-h96mp.dtb
+ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3328-nanopi-r2s.dtb
+ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3328-rock64.dtb
+ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3328-roc-cc.dtb
+diff --git a/arch/arm64/boot/dts/rockchip/rk3328-h96mp.dts b/arch/arm64/boot/dts/rockchip/rk3328-h96mp.dts
+new file mode 100644
+index 000000000000..a764364333bf
+--- /dev/null
++++ b/arch/arm64/boot/dts/rockchip/rk3328-h96mp.dts
+@@ -0,0 +1,423 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++/*
++ * Copyright (c) 2021 Ezra Buehler
++ */
++
++/dts-v1/;
++#include "rk3328.dtsi"
++
++/ {
++	model = "H96 Max+ TV box";
++	compatible = "rockchip,rk3328-h96mp", "rockchip,rk3328";
++
++	gmac_clkin: external-gmac-clock {
++		compatible = "fixed-clock";
++		clock-frequency = <125000000>;
++		clock-output-names = "gmac_clkin";
++		#clock-cells = <0>;
++	};
++
++	gpu_opp_table: gpu-opp-table {
++		compatible = "operating-points-v2";
++		nvmem-cells = <&logic_leakage>;
++		nvmem-cell-names = "gpu_leakage";
++
++		opp-200000000 {
++			opp-hz = /bits/ 64 <200000000>;
++			opp-microvolt = <925000>;
++			opp-microvolt-L0 = <925000>;
++			opp-microvolt-L1 = <900000>;
++		};
++
++		opp-300000000 {
++			opp-hz = /bits/ 64 <300000000>;
++			opp-microvolt = <975000>;
++			opp-microvolt-L0 = <975000>;
++			opp-microvolt-L1 = <950000>;
++		};
++
++		opp-400000000 {
++			opp-hz = /bits/ 64 <400000000>;
++			opp-microvolt = <1050000>;
++			opp-microvolt-L0 = <1050000>;
++			opp-microvolt-L1 = <1025000>;
++		};
++
++		opp-500000000 {
++			opp-hz = /bits/ 64 <500000000>;
++			opp-microvolt = <1125000>;
++			opp-microvolt-L0 = <1125000>;
++			opp-microvolt-L1 = <1100000>;
++		};
++	};
++
++	ir-receiver {
++		compatible = "gpio-ir-receiver";
++		gpios = <&gpio2 RK_PA2 GPIO_ACTIVE_LOW>;
++		linux,rc-map-name = "rc-x96max";
++		pinctrl-names = "default";
++		pinctrl-0 = <&ir_int>;
++	};
++
++	leds {
++		compatible = "gpio-leds";
++
++		power {
++			gpios = <&gpio2 RK_PC7 GPIO_ACTIVE_LOW>;
++			default-state = "on";
++		};
++	};
++
++	regulators {
++		compatible = "simple-bus";
++		#address-cells = <1>;
++		#size-cells = <0>;
++
++		vccio_1v8_reg: regulator@0 {
++			compatible = "regulator-fixed";
++			regulator-always-on;
++			regulator-max-microvolt = <1800000>;
++			regulator-min-microvolt = <1800000>;
++			regulator-name = "vccio_1v8";
++		};
++
++		vccio_3v3_reg: regulator@1 {
++			compatible = "regulator-fixed";
++			regulator-always-on;
++			regulator-max-microvolt = <3300000>;
++			regulator-min-microvolt = <3300000>;
++			regulator-name = "vccio_3v3";
++		};
++	};
++
++	sdio_pwrseq: sdio-pwrseq {
++		compatible = "mmc-pwrseq-simple";
++		pinctrl-names = "default";
++		pinctrl-0 = <&wifi_enable_h>;
++		reset-gpios = <&gpio1 RK_PC2 GPIO_ACTIVE_LOW>;
++	};
++
++	vcc_host_vbus: host-vbus-regulator {
++		compatible = "regulator-fixed";
++		enable-active-high;
++		gpio = <&gpio0 RK_PA0 GPIO_ACTIVE_HIGH>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&host_vbus_drv>;
++		regulator-max-microvolt = <5000000>;
++		regulator-min-microvolt = <5000000>;
++		regulator-name = "vcc_host_vbus";
++	};
++
++	vcc_otg_vbus: otg-vbus-regulator {
++		compatible = "regulator-fixed";
++		enable-active-high;
++		gpio = <&gpio0 RK_PD3 GPIO_ACTIVE_HIGH>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&otg_vbus_drv>;
++		regulator-max-microvolt = <5000000>;
++		regulator-min-microvolt = <5000000>;
++		regulator-name = "vcc_otg_vbus";
++	};
++
++	vcc_phy: vcc-phy-regulator {
++		compatible = "regulator-fixed";
++		regulator-always-on;
++		regulator-boot-on;
++		regulator-name = "vcc_phy";
++	};
++
++	vcc_sd: sdmmc-regulator {
++		compatible = "regulator-fixed";
++		gpio = <&gpio0 RK_PD6 GPIO_ACTIVE_LOW>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&sdmmc0m1_pin>;
++		regulator-max-microvolt = <3300000>;
++		regulator-min-microvolt = <3300000>;
++		regulator-name = "vcc_sd";
++		vin-supply = <&vccio_3v3_reg>;
++	};
++
++	vdd_arm: vdd-center {
++		compatible = "pwm-regulator";
++		pwms = <&pwm0 0 5000 1>;
++		regulator-always-on;
++		regulator-boot-on;
++		regulator-max-microvolt = <1400000>;
++		regulator-min-microvolt = <950000>;
++		regulator-name = "vdd_arm";
++	};
++
++	vdd_log: vdd-log {
++		compatible = "pwm-regulator";
++		pwms = <&pwm1 0 5000 1>;
++		regulator-always-on;
++		regulator-boot-on;
++		regulator-max-microvolt = <1300000>;
++		regulator-min-microvolt = <900000>;
++		regulator-name = "vdd_log";
++	};
++};
++
++&analog_sound {
++	status = "okay";
++};
++
++&codec {
++	status = "okay";
++};
++
++&cpu0 {
++	cpu-supply = <&vdd_arm>;
++};
++
++&cpu0_opp_table {
++	opp-408000000 {
++		opp-hz = /bits/ 64 <408000000>;
++		opp-microvolt = <975000 975000 1375000>;
++		opp-microvolt-L0 = <975000 975000 1375000>;
++		opp-microvolt-L1 = <975000 975000 1375000>;
++		clock-latency-ns = <40000>;
++		opp-suspend;
++	};
++
++	opp-600000000 {
++		opp-hz = /bits/ 64 <600000000>;
++		opp-microvolt = <1000000 1000000 1375000>;
++		opp-microvolt-L0 = <1000000 1000000 1375000>;
++		opp-microvolt-L1 = <1000000 1000000 1375000>;
++		clock-latency-ns = <40000>;
++	};
++
++	opp-816000000 {
++		opp-hz = /bits/ 64 <816000000>;
++		opp-microvolt = <1100000 1100000 1375000>;
++		opp-microvolt-L0 = <1100000 1100000 1375000>;
++		opp-microvolt-L1 = <1050000 1050000 1375000>;
++		clock-latency-ns = <40000>;
++	};
++
++	opp-1008000000 {
++		opp-hz = /bits/ 64 <1008000000>;
++		opp-microvolt = <1200000 1200000 1375000>;
++		opp-microvolt-L0 = <1200000 1200000 1375000>;
++		opp-microvolt-L1 = <1150000 1150000 1375000>;
++		clock-latency-ns = <40000>;
++	};
++
++	opp-1200000000 {
++		opp-hz = /bits/ 64 <1200000000>;
++		opp-microvolt = <1350000 1350000 1375000>;
++		opp-microvolt-L0 = <1350000 1350000 1375000>;
++		opp-microvolt-L1 = <1300000 1300000 1375000>;
++		clock-latency-ns = <40000>;
++	};
++
++	opp-1296000000 {
++		opp-hz = /bits/ 64 <1296000000>;
++		opp-microvolt = <1375000 1375000 1375000>;
++		opp-microvolt-L0 = <1375000 1375000 1375000>;
++		opp-microvolt-L1 = <1350000 1350000 1375000>;
++		clock-latency-ns = <40000>;
++	};
++};
++
++&cpu1 {
++	cpu-supply = <&vdd_arm>;
++};
++
++&cpu2 {
++	cpu-supply = <&vdd_arm>;
++};
++
++&cpu3 {
++	cpu-supply = <&vdd_arm>;
++};
++
++&emmc {
++	bus-width = <8>;
++	cap-mmc-highspeed;
++	mmc-ddr-1_8v;
++	mmc-hs200-1_8v;
++	non-removable;
++	pinctrl-names = "default";
++	pinctrl-0 = <&emmc_clk &emmc_cmd &emmc_bus8>;
++	status = "okay";
++};
++
++&gmac2phy {
++	assigned-clock-parents = <&cru SCLK_MAC2PHY_SRC>;
++	assigned-clock-rate = <50000000>;
++	assigned-clocks = <&cru SCLK_MAC2PHY>;
++	assigned-clocks = <&cru SCLK_MAC2PHY_SRC>;
++	clock_in_out = "output";
++	phy-supply = <&vcc_phy>;
++	status = "okay";
++};
++
++&gpu {
++	mali-supply = <&vdd_log>;
++	operating-points-v2 = <&gpu_opp_table>;
++
++	power_model {
++		compatible = "arm,mali-simple-power-model";
++		dynamic-power = <396>;
++		frequency = <500>;
++		static-power = <300>;
++		thermal-zone = "soc-thermal";
++		ts = <0x7d00 0x125c 0xffffffb0 0x02>;
++		voltage = <900>;
++	};
++};
++
++&hdmi {
++	status = "okay";
++};
++
++&hdmiphy {
++	status = "okay";
++};
++
++&hdmi_sound {
++	status = "okay";
++};
++
++&i2s0 {
++	status = "okay";
++};
++
++&i2s1 {
++	status = "okay";
++};
++
++&io_domains {
++	vccio1-supply = <&vccio_3v3_reg>;
++	vccio2-supply = <&vccio_1v8_reg>;
++	vccio3-supply = <&vccio_3v3_reg>;
++	vccio4-supply = <&vccio_1v8_reg>;
++	vccio5-supply = <&vccio_3v3_reg>;
++	vccio6-supply = <&vccio_3v3_reg>;
++	pmuio-supply = <&vccio_3v3_reg>;
++	status = "okay";
++};
++
++&pinctrl {
++	pinctrl-names = "default";
++	pinctrl-0 = <&clk_32k_out>;
++
++	clk_32k {
++		clk_32k_out: clk-32k-out {
++			rockchip,pins = <1 RK_PD4 1 &pcfg_pull_none>;
++		};
++	};
++
++	ir {
++		ir_int: ir-int {
++			rockchip,pins = <2 RK_PA2 RK_FUNC_GPIO &pcfg_pull_none>;
++		};
++	};
++
++	pmic {
++		pmic_int_l: pmic-int-l {
++			rockchip,pins = <2 RK_PA6 RK_FUNC_GPIO &pcfg_pull_up>;
++		};
++	};
++
++	sdio-pwrseq {
++		wifi_enable_h: wifi-enable-h {
++			rockchip,pins = <1 RK_PC2 RK_FUNC_GPIO &pcfg_pull_none>;
++		};
++	};
++
++	usb {
++		host_vbus_drv: host-vbus-drv {
++			rockchip,pins = <0 RK_PA0 RK_FUNC_GPIO &pcfg_pull_none>;
++		};
++
++		otg_vbus_drv: otg-vbus-drv {
++			rockchip,pins = <0 RK_PA2 RK_FUNC_GPIO &pcfg_pull_none>;
++		};
++	};
++};
++
++&pwm0 {
++	status = "okay";
++};
++
++&pwm1 {
++	status = "okay";
++};
++
++&sdio {
++	bus-width = <4>;
++	cap-sd-highspeed;
++	cap-sdio-irq;
++	keep-power-in-suspend;
++	mmc-pwrseq = <&sdio_pwrseq>;
++	non-removable;
++	num-slots = <1>;
++	pinctrl-names = "default";
++	pinctrl-0 = <&sdmmc1_bus4 &sdmmc1_cmd &sdmmc1_clk>;
++	status = "disabled";
++};
++
++&sdmmc {
++	bus-width = <4>;
++	cap-mmc-highspeed;
++	cap-sd-highspeed;
++	disable-wp;
++	pinctrl-names = "default";
++	pinctrl-0 = <&sdmmc0_clk &sdmmc0_cmd &sdmmc0_dectn &sdmmc0_bus4>;
++	status = "okay";
++};
++
++&tsadc {
++	rockchip,hw-tshut-mode = <0>;
++	rockchip,hw-tshut-polarity = <0>;
++	status = "okay";
++};
++
++&uart2 {
++	status = "okay";
++};
++
++&u2phy {
++	status = "okay";
++};
++
++&u2phy_host {
++	status = "okay";
++};
++
++&u2phy_otg {
++	status = "okay";
++};
++
++&usb20_otg {
++	dr_mode = "host";
++	status = "okay";
++};
++
++&usb_host0_ehci {
++	status = "okay";
++};
++
++&usb_host0_ohci {
++	status = "okay";
++};
++
++&usbdrd3 {
++	status = "okay";
++};
++
++&usbdrd_dwc3 {
++	dr_mode = "host";
++	status = "okay";
++};
++
++&vop {
++	status = "okay";
++};
++
++&vop_mmu {
++	status = "okay";
++};
+-- 
+2.20.1
+

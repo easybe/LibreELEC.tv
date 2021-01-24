@@ -234,6 +234,10 @@ devices = \
         'dtb': 'rk3328-a1.dtb',
         'config': 'evb-rk3328_defconfig'
       },
+      'h96mp': {
+        'dtb': 'rk3328-h96mp.dtb',
+        'config': 'evb-rk3328_defconfig'
+      },
       'roc-cc': {
         'dtb': 'rk3328-roc-cc.dtb',
         'config': 'evb-rk3328_defconfig'
